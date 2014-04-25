@@ -27,7 +27,7 @@ const std::array<unsigned, 16> text::SB = { 4, 1, 14, 8, 13, 6, 2, 11,
 const std::array<unsigned, 16> text::PB = { 0, 4, 8, 12, 1, 5, 9, 13,
                                             2, 6, 10, 14, 3, 7, 11, 15 };
 
-text::text(std::initializer_list<std::initializer_list<unsigned>> list)
+text::text(std::initializer_list<unsigned> list)
 {
     for (auto it : list) {
         bits.emplace_back(it);
@@ -52,7 +52,7 @@ void text::xor_key(unsigned round)
 void text::substitution_box()
 {
     for (unsigned i = 0; i < 4; ++i) {
-        unsigned x = SB[btou(i)];
+        unsigned x = SB[bits_to_unsigned(i)];
         bits[i*4] = (x & 0x8) >> 3;
         bits[(i*4)+1] = (x & 0x4) >> 2;
         bits[(i*4)+2] = (x & 0x2) >> 1;

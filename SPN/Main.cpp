@@ -1,7 +1,7 @@
 #include "main.h"
 
 int main() {
-    Text pt{ 0, 1, 0, 0, 1, 1, 1, 0, 1, 0, 1, 0, 0, 0, 0, 1 };
+    text pt{ 0, 1, 0, 0, 1, 1, 1, 0, 1, 0, 1, 0, 0, 0, 0, 1 };
     for (unsigned i = 0; i < 3; ++i) {
         pt.xor_key(i);
         pt.substitution_box();
