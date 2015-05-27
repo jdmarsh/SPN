@@ -3,32 +3,65 @@
 unsigned ascii2decimal(char);
 
 SPN::SPN(std::string binaryKey) {
-    //align key to 16 bits
+    if (!validateBinaryString(binaryKey)) {
+        throw std::string("Invalid binary key provided");
+    }
+    for (unsigned index = 0; index < binaryKey.size() % 4; ++index) {
+        binaryKey = "0" + binaryKey;
+    }
     key = binaryKey;
     SB = "41e8d62bfc973a50";
     PB = "048c159d26ae37bf";
 }
 
 SPN::SPN(std::string binaryKey, std::string subBox, std::string permBox) {
+    if (!validateBinaryString(binaryKey)) {
+        throw std::string("Invalid binary key provided");
+    }
+    if (subBox.size() != 16 || permBox.size() != 16) {
+        throw std::string("Substitution and permutation boxes must both be 16 characters long");
+    }
+    //4 bit alignment
+    for (unsigned index = 0; index < binaryKey.size() % 4; ++index) {
+        binaryKey = "0" + binaryKey;
+    }
     key = binaryKey;
-    SB = subBox;
-    PB = permBox;
+
+    if (subBox.size() == 16) {
+        SB = subBox;
+    } else {
+        SB = "41e8d62bfc973a50";
+    }
+
+    if (permBox.size() == 16) {
+        PB = permBox;
+    } else {
+        PB = "048c159d26ae37bf";
+    }
 };
 
 std::string SPN::encryptMessage(std::string message, unsigned itterations) {
-    //align message to 16 bits
-    for (unsigned i = 0; i < itterations; ++i) {
-        xor_key(message, i);
-        substitution_box(message);
-        permutation_box(message);
+    if (!validateBinaryString(message)) {
+        throw std::string("Invalid binary message provided");
     }
-    xor_key(message, itterations);
-    substitution_box(message);
-    xor_key(message, itterations + 1);
+    if (message.size() != 16) {
+        throw std::string("Message length must be 16 bits");
+    }
+    if (key.size() < (16 + (4 * (itterations + 1)))) {
+        throw std::string("Key length does not support this number of itterations for the message provided");
+    }
+    for (unsigned i = 0; i < itterations; ++i) {
+        xor(message, i);
+        substitutionBox(message);
+        permutationBox(message);
+    }
+    xor(message, itterations);
+    substitutionBox(message);
+    xor(message, itterations + 1);
     return message;
 }
 
-unsigned SPN::bits_to_unsigned(std::string& message, unsigned i) {
+unsigned SPN::getUnsignedCharacter(std::string& message, unsigned i) {
     unsigned result = 0;
     for (unsigned index = (i * 4); index < (i * 4) + 4; ++index) {
         result = result << 1;
@@ -39,7 +72,7 @@ unsigned SPN::bits_to_unsigned(std::string& message, unsigned i) {
     return result;
 }
 
-void SPN::xor_key(std::string& message, unsigned round) {
+void SPN::xor(std::string& message, unsigned round) {
     for (unsigned i = 0; i < 16; ++i) {
         bool messageBit = (message[i] == '1');
         bool keyBit = (key[(round * 4) + i] == '1');
@@ -51,9 +84,9 @@ void SPN::xor_key(std::string& message, unsigned round) {
     }
 }
 
-void SPN::substitution_box(std::string& message) {
+void SPN::substitutionBox(std::string& message) {
     for (unsigned i = 0; i < 4; ++i) {
-        unsigned x = ascii2decimal(SB[bits_to_unsigned(message, i)]);
+        unsigned x = ascii2decimal(SB[getUnsignedCharacter(message, i)]);
         for (unsigned j = 0; j < 4; ++j) {
             if (((x >> (3 - j)) & 0x1) > 0) {
                 message[(i * 4) + j] = '1';
@@ -64,7 +97,7 @@ void SPN::substitution_box(std::string& message) {
     }
 }
 
-void SPN::permutation_box(std::string& message) {
+void SPN::permutationBox(std::string& message) {
     for (unsigned i = 0; i < 16; ++i) {
         if (i <= ascii2decimal(PB[i])) {
             unsigned temp = message[i];
@@ -72,6 +105,15 @@ void SPN::permutation_box(std::string& message) {
             message[ascii2decimal(PB[i])] = temp;
         }
     }
+}
+
+bool validateBinaryString(std::string binary) {
+    for (char bit : binary) {
+        if (!(bit == '0' || bit == '1')) {
+            return false;
+        }
+    }
+    return true;
 }
 
 unsigned ascii2decimal(char character) {
