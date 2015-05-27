@@ -85,8 +85,9 @@ void SPN::xor(std::string& message, unsigned round) {
 }
 
 void SPN::substitutionBox(std::string& message) {
+    std::vector<unsigned> plainText = binary2char(message);
     for (unsigned i = 0; i < 4; ++i) {
-        unsigned x = ascii2decimal(SB[getUnsignedCharacter(message, i)]);
+        unsigned x = ascii2decimal(SB[plainText[i]]);
         for (unsigned j = 0; j < 4; ++j) {
             if (((x >> (3 - j)) & 0x1) > 0) {
                 message[(i * 4) + j] = '1';
@@ -105,6 +106,30 @@ void SPN::permutationBox(std::string& message) {
             message[ascii2decimal(PB[i])] = temp;
         }
     }
+}
+
+std::vector<unsigned> binary2char(std::string binary) {
+    if (!validateBinaryString(binary)) {
+        throw std::string("Invalid binary data provided");
+    }
+
+    //4 bit alignment
+    for (unsigned index = 0; index < binary.size() % 4; ++index) {
+        binary = "0" + binary;
+    }
+
+    std::vector<unsigned> plainText;
+    for (unsigned characterIndex = 0; characterIndex < binary.size(); characterIndex += 4) {
+        unsigned character = 0;
+        for (unsigned bitIndex = 0; bitIndex < 4; ++bitIndex) {
+            character = character << 1;
+            if (binary[characterIndex + bitIndex] == '1') {
+                ++character;
+            }
+        }
+        plainText.push_back(character);
+    }
+    return plainText;
 }
 
 bool validateBinaryString(std::string binary) {

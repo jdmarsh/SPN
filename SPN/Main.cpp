@@ -14,27 +14,3 @@ int main() {
 
     return 0;
 }
-
-std::vector<unsigned> binary2char(std::string binary) {
-    if (!validateBinaryString(binary)) {
-        throw std::string("Invalid binary data provided");
-    }
-
-    //4 bit alignment
-    for (unsigned index = 0; index < binary.size() % 4; ++index) {
-        binary = "0" + binary;
-    }
-
-    std::vector<unsigned> plainText;
-    for (unsigned characterIndex = 0; characterIndex < binary.size(); characterIndex += 4) {
-        unsigned character = 0;
-        for (unsigned bitIndex = 0; bitIndex < 4; ++bitIndex) {
-            character = character << 1;
-            if (binary[characterIndex + bitIndex] == '1') {
-                ++character;
-            }
-        }
-        plainText.push_back(character);
-    }
-    return plainText;
-}
